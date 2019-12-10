@@ -21,3 +21,16 @@
 
 ## Credits and Collaborations
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->
+
+Names: Joshua Deforrest, Shane Gable
+
+Number and name of feature: 1. repository
+
+Estimate of time needed to complete: 30 minutes
+
+Start time: 900am
+
+Finish time: 930am
+
+Actual time needed to complete: 30 min
+
