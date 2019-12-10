@@ -2,6 +2,10 @@
 // GLOBAL VARIABLES AND DEPENDENCIES
 let weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
 let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+let error = {
+  status: 500,
+  responseText: "Sorry, something went wrong",
+}
 const PORT = process.env.PORT || 3000;
 const express = require('express');
 const cors = require('cors');
@@ -9,13 +13,18 @@ const app = express();
 require('dotenv').config();
 app.use(cors());
 
-
 // LOCATION PATH
 app.get('/location', (request, response) => {
   const geoData = require('./data/geo.json');
+  let query = request.query['data'].toLowerCase();
   const location = geoData.results[0].geometry.location;
   const formAddr = geoData.results[0].formatted_address;
   const search_query = geoData.results[0].address_components[0].short_name.toLowerCase();
+  if (query !== search_query) {
+    response.send(error);
+    console.log(error);
+    return null;
+  }
   response.send(new Geolocation (search_query, formAddr, location));
 });
 // LOCATION CONSTRUCTOR FUNCTION
@@ -40,7 +49,7 @@ function Forecast (summary, time) {
   this.forecast = summary;
   this.time = getDate(new Date(time));
 }
-// RETURNS FORMATTED DATE
+// RETURNS FORMATTED DATE STRING
 function getDate (time) {
   let day = weekday[time.getDay()];
   let month = months[time.getMonth()];
@@ -48,8 +57,6 @@ function getDate (time) {
   let year = time.getFullYear();
   return `${day} ${month} ${date} ${year}`;
 }
-
-
 
 app.listen(PORT);
 
