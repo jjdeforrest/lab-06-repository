@@ -24,13 +24,12 @@
 
 Names: Joshua Deforrest, Shane Gable
 
-Number and name of feature: 1. repository
+Number and name of feature: Lab 6 day 1
 
-Estimate of time needed to complete: 30 minutes
+Estimate of time needed to complete: 2 hours
 
 Start time: 900am
 
-Finish time: 930am
+Finish time: 1050am
 
-Actual time needed to complete: 30 min
-
+Actual time needed to complete: 1:50
