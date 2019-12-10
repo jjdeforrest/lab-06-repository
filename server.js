@@ -1,7 +1,7 @@
 'use strict';
 // GLOBAL VARIABLES AND DEPENDENCIES
 let weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
-let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const PORT = process.env.PORT || 3000;
 const express = require('express');
 const cors = require('cors');
@@ -25,6 +25,7 @@ function Geolocation (search_query,formAddr,location) {
   this.latitude = location['lat'];
   this.longitude = location['lng'];
 }
+// WEATHER PATH
 app.get('/weather', (request , response ) => {
   const reply = [];
   const weatherData = require('./data/darksky.json');
@@ -34,12 +35,12 @@ app.get('/weather', (request , response ) => {
   }
   response.send( reply );
 })
-
+// FORECAST CONSTRUCTOR FUNCTION
 function Forecast (summary, time) {
   this.forecast = summary;
   this.time = getDate(new Date(time));
 }
-
+// RETURNS FORMATTED DATE
 function getDate (time) {
   let day = weekday[time.getDay()];
   let month = months[time.getMonth()];
@@ -47,7 +48,6 @@ function getDate (time) {
   let year = time.getFullYear();
   return `${day} ${month} ${date} ${year}`;
 }
-
 
 
 
