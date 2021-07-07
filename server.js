@@ -1,55 +1,93 @@
 'use strict';
-// GLOBAL VARIABLES AND DEPENDENCIES
-let weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
-let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+//DEPENDENCIES
 const PORT = process.env.PORT || 3000;
 const express = require('express');
 const cors = require('cors');
 const app = express();
-require('dotenv').config();
+const superagent = require('superagent');
 app.use(cors());
+require('dotenv').config();
 
+// GLOBAL VARIABLES
+let error = {
+  status: 500,
+  responseText: 'Sorry, something went wrong',
+}
+const GEOCODE_API_KEY = process.env.geocode_api;
+const WEATHER_API_KEY = process.env.weather_api;
+const EVENTBRITE_API_KEY = process.env.event_api;
+let locationSubmitted;
 
 // LOCATION PATH
-app.get('/location', (request, response) => {
-  const geoData = require('./data/geo.json');
-  const location = geoData.results[0].geometry.location;
-  const formAddr = geoData.results[0].formatted_address;
-  const search_query = geoData.results[0].address_components[0].short_name.toLowerCase();
-  response.send(new Geolocation (search_query, formAddr, location));
+app.get('/location', (request, res) => {
+  let query = request.query.data;
+
+  superagent.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${GEOCODE_API_KEY}`).then(response => {
+    const result = response.body.results[0]
+    const location = result.geometry.location;
+    const formAddr = result.formatted_address;
+    const searchquery = result.address_components[0].long_name.toLowerCase();
+    if (query !== searchquery) {
+      alert(error);
+      console.log(error);
+      return null;
+    }
+    locationSubmitted = new Geolocation(searchquery, formAddr, location);
+    res.send(locationSubmitted);
+  })
+
 });
+
 // LOCATION CONSTRUCTOR FUNCTION
-function Geolocation (search_query,formAddr,location) {
-  this.search_query = search_query;
-  this.formatted_address = formAddr;
-  this.latitude = location['lat'];
-  this.longitude = location['lng'];
+function Geolocation(searchquery, formAddr, location) {
+  this.searchquery = searchquery;
+  this.formatted_query = formAddr;
+  this.latitude = location.lat;
+  this.longitude = location.lng;
 }
+
 // WEATHER PATH
-app.get('/weather', (request , response ) => {
-  const reply = [];
-  const weatherData = require('./data/darksky.json');
-  const weatherArr = weatherData.daily.data
-  for (let i = 0; i < weatherArr.length; i++) {
-    reply.push(new Forecast (weatherArr[i].summary, weatherArr[i].time));
-  }
-  response.send( reply );
+app.get('/weather', (request, response) => {
+  superagent.get(`https://api.darksky.net/forecast/${WEATHER_API_KEY}/${locationSubmitted.latitude},${locationSubmitted.longitude}`).then(res => {
+    const weatherArr = res.body.daily.data
+    const reply = weatherArr.map(byDay => {
+      return new Forecast(byDay.summary, byDay.time);
+    })
+    response.send(reply);
+  })
 })
+
 // FORECAST CONSTRUCTOR FUNCTION
-function Forecast (summary, time) {
+function Forecast(summary, time) {
   this.forecast = summary;
-  this.time = getDate(new Date(time));
-}
-// RETURNS FORMATTED DATE
-function getDate (time) {
-  let day = weekday[time.getDay()];
-  let month = months[time.getMonth()];
-  let date = time.getDate();
-  let year = time.getFullYear();
-  return `${day} ${month} ${date} ${year}`;
+  this.time = (new Date(time * 1000)).toDateString();
 }
 
+// EVENTS PATH
+app.get('/events', (request, response) => {
+  superagent.get(`http://api.eventful.com/json/events/search?where=${locationSubmitted.latitude},${locationSubmitted.longitude}&within=25&app_key=${EVENTBRITE_API_KEY}`).then(res => {
+    let events = JSON.parse(res.text);
+    let moreEvents = events.events.event
+    let eventData = moreEvents.map(event => {
+      return new Event(event.url, event.title, event.start_time, event.description);
+    })
+    response.send(eventData);
+  }).catch( function () {
+    console.log('banana');
+    return null;
+  })
+})
 
+// EVENTS CONSTRUCTOR FUNCTION
+function Event(link, name, event_date, summary='none') {
+  this.link = link,
+  this.name = name,
+  this.event_date = event_date,
+  this.summary = summary
+}
 
-app.listen(PORT);
-
+// LISTEN
+app.listen(PORT, () => {
+  console.log(`App is on PORT: ${PORT}`);
+});
